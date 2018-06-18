@@ -1,4 +1,4 @@
-package sample;
+package gui;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -13,6 +13,8 @@ public class Main extends Application {
         Parent root = FXMLLoader.load(getClass().getResource("MainWindow.fxml"));
         primaryStage.setTitle("ExcelComparator");
         primaryStage.setScene(new Scene(root));
+        primaryStage.setMinWidth(610);
+        primaryStage.setMinHeight(400);
         primaryStage.show();
     }
 
