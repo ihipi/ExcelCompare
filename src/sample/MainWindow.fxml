@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+
+<AnchorPane maxHeight="150.0" maxWidth="600.0" minHeight="150.0" minWidth="600.0" prefHeight="150.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controller">
+   <children>
+      <HBox layoutX="35.0" layoutY="25.0" maxHeight="150.0" maxWidth="600.0" minHeight="150.0" minWidth="600.0" prefHeight="150.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <Pane prefHeight="200.0" prefWidth="200.0">
+               <children>
+                  <Label layoutX="68.0" layoutY="14.0" text="Left Excel" />
+                  <TextArea fx:id="txtA" layoutX="2.0" layoutY="39.0" prefHeight="72.0" prefWidth="196.0" promptText="Drag or choose an *.xls/xlsx File" />
+                  <Button layoutX="83.0" layoutY="111.0" mnemonicParsing="false" text="..." />
+               </children>
+            </Pane>
+            <Separator orientation="VERTICAL" prefHeight="200.0" />
+            <Pane prefHeight="200.0" prefWidth="200.0">
+               <children>
+                  <RadioButton layoutX="14.0" layoutY="14.0" mnemonicParsing="false" text="OpenL" />
+                  <RadioButton layoutX="123.0" layoutY="14.0" mnemonicParsing="false" text="Excel" />
+                  <Button fx:id="btnCompare" layoutX="67.0" layoutY="49.0" mnemonicParsing="false" onAction="#compareFiles" text="Compare" />
+                  <Button layoutX="75.0" layoutY="89.0" mnemonicParsing="false" text="Clean" />
+               </children>
+            </Pane>
+            <Separator orientation="VERTICAL" prefHeight="200.0" />
+            <Pane prefHeight="200.0" prefWidth="200.0">
+               <children>
+                  <Label layoutX="60.0" layoutY="14.0" text="Rigth Excel" />
+                  <TextArea fx:id="txtB" layoutY="39.0" prefHeight="72.0" prefWidth="196.0" promptText="Drag or choose an *.xls/xlsx File" />
+                  <Button layoutX="67.0" layoutY="111.0" mnemonicParsing="false" text="..." />
+               </children>
+            </Pane>
+         </children>
+      </HBox>
+   </children>
+</AnchorPane>
