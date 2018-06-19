@@ -115,7 +115,7 @@ public class diff_match_patch {
      * which means: delete "Hello", add "Goodbye" and keep " world."
      */
     public enum Operation {
-        DELETE, INSERT, EQUAL
+        DELETE, INSERT, CHANGED, EQUAL
     }
 
     /**

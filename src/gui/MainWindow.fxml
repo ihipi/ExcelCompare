@@ -23,8 +23,8 @@
             <Pane prefHeight="200.0" prefWidth="200.0">
               <children>
                 <Label layoutX="68.0" layoutY="14.0" text="Left Excel" />
-                <TextArea fx:id="txtA" layoutX="2.0" layoutY="39.0" prefHeight="72.0" prefWidth="196.0" promptText="Drag or choose an *.xls/xlsx File" />
-                <Button layoutX="83.0" layoutY="111.0" mnemonicParsing="false" text="..." />
+                <TextArea fx:id="txtA" layoutX="2.0" layoutY="39.0" onDragOver="#leftDragOver" prefHeight="72.0" prefWidth="196.0" promptText="Drag or choose an *.xls/xlsx File" />
+                <Button layoutX="83.0" layoutY="111.0" mnemonicParsing="false" onAction="#fileChooserA" text="..." />
               </children>
             </Pane>
             <Separator orientation="VERTICAL" prefHeight="200.0" />
@@ -40,8 +40,8 @@
             <Pane prefHeight="200.0" prefWidth="200.0">
               <children>
                 <Label layoutX="60.0" layoutY="14.0" text="Rigth Excel" />
-                <TextArea fx:id="txtB" layoutY="39.0" prefHeight="72.0" prefWidth="196.0" promptText="Drag or choose an *.xls/xlsx File" />
-                <Button layoutX="67.0" layoutY="111.0" mnemonicParsing="false" text="..." />
+                <TextArea fx:id="txtB" layoutY="39.0" onDragOver="#rigthDragOver" prefHeight="72.0" prefWidth="196.0" promptText="Drag or choose an *.xls/xlsx File" />
+                <Button layoutX="67.0" layoutY="111.0" mnemonicParsing="false" onAction="#fileChooserB" text="..." />
               </children>
             </Pane>
           </children>
