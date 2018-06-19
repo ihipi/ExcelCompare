@@ -46,7 +46,7 @@ public class ExcelCompare {
     public CellDiff compareCell(Cell ca, Cell cb){
         LinkedList<diff_match_patch.Diff> diffs = diff.diff_main(ca.getStringCellValue(), cb.getStringCellValue(), true);
         CellDiff cell = new CellDiff(ca, ca.getStringCellValue(), cb.getStringCellValue(), diffs);
-
+        return cell;
     }
 
 }
