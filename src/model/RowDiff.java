@@ -1,6 +1,6 @@
-package core;
+package model;
 import core.diff_match_patch.Operation;
-import javafx.scene.control.Cell;
+import org.apache.poi.ss.usermodel.Row;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +10,9 @@ public class RowDiff {
     private List<CellDiff> cells = new ArrayList<CellDiff>();
     private int rowindex;
     private Boolean isHeader;
+    private Row rowOld;
+    private Row rowNew;
+
 
 
     public RowDiff(boolean isheader){
@@ -26,6 +29,21 @@ public class RowDiff {
 
     }
 
+    public Row getRowOld() {
+        return rowOld;
+    }
+
+    public void setRowOld(Row rowOld) {
+        this.rowOld = rowOld;
+    }
+
+    public Row getRowNew() {
+        return rowNew;
+    }
+
+    public void setRowNew(Row rowNew) {
+        this.rowNew = rowNew;
+    }
 
     public Operation getOperation() {
         return operation;

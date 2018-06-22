@@ -1,32 +1,30 @@
-package core;
+package model;
 
-import org.apache.poi.ss.formula.functions.Column;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellRange;
-import org.apache.poi.ss.usermodel.Row;
 import core.diff_match_patch.Diff;
 import core.diff_match_patch.Operation;
+import org.apache.poi.ss.usermodel.Cell;
 
 import java.util.LinkedList;
 
 public class CellDiff {
 
-    private Cell range;
+    private Cell cell;
     private Operation state;
     private String txtOld;
     private String txtNew;
     private LinkedList<Diff> diffs;
 
 
-    public CellDiff(Cell range, Operation state, String txtOld, String txtNew) {
-        this.range = range;
+    public CellDiff(Cell cell, Operation state, String txtOld, String txtNew) {
+        this.cell = cell;
         this.state = state;
         this.txtOld = txtOld;
         this.txtNew = txtNew;
+
     }
 
     public CellDiff(Cell cell, String stringa, String stringb, LinkedList<Diff> diffs) {
-        this.range = cell;
+        this.cell = cell;
         this.txtOld = stringa;
         this.txtNew = stringb;
         this.diffs = diffs;
@@ -44,18 +42,18 @@ public class CellDiff {
     }
 
     public int getRow(){
-        return range.getRowIndex();
+        return cell.getRowIndex();
     }
     public int getCol(){
-        return range.getColumnIndex();
+        return cell.getColumnIndex();
     }
 
-    public Cell getRange() {
-        return range;
+    public Cell getCell() {
+        return cell;
     }
 
-    public void setRange(Cell range) {
-        this.range = range;
+    public void setCell(Cell cell) {
+        this.cell = cell;
     }
 
     public Operation getState() {
@@ -97,14 +95,14 @@ public class CellDiff {
                 this.diffs) {
             switch (diff.operation) {
                 case INSERT:
-                    str.append("**");
+                    str.append("<font color=\"#6495ED\">");
                     str.append(diff.text);
-                    str.append("**");
+                    str.append("</font> ");
                     break;
                 case DELETE:
-                    str.append("~~");
+                    str.append("<font color=\"#DC143C\">");
                     str.append(diff.text);
-                    str.append("~~");
+                    str.append("</font> ");
                     break;
                 case EQUAL:
                     str.append(diff.text);

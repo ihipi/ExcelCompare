@@ -4,14 +4,9 @@ import core.ExcelCompare;
 import core.diff_match_patch;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
-
-import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
@@ -20,7 +15,6 @@ import javafx.stage.Stage;
 import org.apache.poi.ss.usermodel.Workbook;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -30,6 +24,8 @@ public class Controller {
     private diff_match_patch comparador = new diff_match_patch();
     private ExcelCompare eCompare = new ExcelCompare();
 
+    @FXML
+    private ToggleGroup toggleGroup;
 
     @FXML
     private ResourceBundle resources;
@@ -39,6 +35,7 @@ public class Controller {
 
     @FXML
     private Button btnCompare;
+
 
     @FXML
     private TextArea txtA;
@@ -50,6 +47,11 @@ public class Controller {
         if(!txtA.getText().isEmpty() && !txtB.getText().isEmpty()) {
             Workbook wbA = eCompare.openFile(txtA.getText());
             Workbook wbB = eCompare.openFile(txtB.getText());
+            boolean isopenl = false;
+            if("OpenL".equalsIgnoreCase(toggleGroup.getSelectedToggle().toString())){
+                isopenl = true;
+            }
+            eCompare.compareWorkbooks(wbA, wbB, isopenl);
         }
     }
 

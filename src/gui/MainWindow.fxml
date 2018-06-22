@@ -7,6 +7,7 @@
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.control.TreeView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
@@ -30,8 +31,14 @@
             <Separator orientation="VERTICAL" prefHeight="200.0" />
             <Pane prefHeight="200.0" prefWidth="200.0">
               <children>
-                <RadioButton layoutX="14.0" layoutY="14.0" mnemonicParsing="false" text="OpenL" />
-                <RadioButton layoutX="123.0" layoutY="14.0" mnemonicParsing="false" text="Excel" />
+                <fx:define>
+                  <ToggleGroup fx:id="toggleGroup" />
+                </fx:define>
+                <RadioButton layoutX="14.0" layoutY="14.0" mnemonicParsing="false" selected="true" text="OpenL">
+                           <toggleGroup>
+                              <ToggleGroup fx:id="toggleGroup" />
+                           </toggleGroup></RadioButton>
+                <RadioButton layoutX="123.0" layoutY="14.0" mnemonicParsing="false" text="Excel" toggleGroup="$toggleGroup" />
                 <Button fx:id="btnCompare" layoutX="67.0" layoutY="49.0" mnemonicParsing="false" onAction="#compareFiles" text="Compare" />
                 <Button layoutX="75.0" layoutY="89.0" mnemonicParsing="false" text="Clean" />
               </children>
