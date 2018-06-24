@@ -5,6 +5,8 @@ import core.diff_match_patch.Operation;
 import model.CellDiff;
 import model.OpenLFunction;
 import model.RowDiff;
+import model.SheetDiff;
+import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -20,7 +22,6 @@ public class ExcelCompare {
 
     private static String[] types = {"Spreadsheet", "Rules", "Method"};
     DataFormatter format = new DataFormatter();
-    FormulaEvaluator formulaEvaluator;
     private diff_match_patch diff = new diff_match_patch();
 
 
@@ -36,25 +37,87 @@ public class ExcelCompare {
 
         try {
             FileInputStream excelFile = new FileInputStream(new File(path));
-            Workbook wb = WorkbookFactory.create(new File(path));
-            return wb;
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InvalidFormatException e) {
-            e.printStackTrace();
-        } catch (Exception e){
+            return  WorkbookFactory.create(new File(path));
+        } catch (InvalidFormatException | IOException | EncryptedDocumentException e) {
             e.printStackTrace();
         }
         return null;
     }
 
     public void compareWorkbooks(Workbook wba, Workbook wbb, boolean isopenl){
-        List<Sheet> sheetsA = getworkbookSheets(wba);
-        List<Sheet> sheetsB = getworkbookSheets(wbb);
+        List<SheetDiff> sheetsA = getworkbookSheets(wba);
+        List<SheetDiff> sheetsB = getworkbookSheets(wbb);
 
     }
 
-    private List<Sheet> getworkbookSheets(Workbook wb) {
+    public List<SheetDiff> compareWorkbooks(String wbPathA, String wbPathB, boolean isopenl){
+        Workbook wba = openFile(wbPathA);
+        Workbook wbb = openFile(wbPathB);
+        List<SheetDiff> sheetsA = getworkbookSheets(wba);
+        List<SheetDiff> sheetsB = getworkbookSheets(wbb);
+        List<SheetDiff> diffs= new ArrayList<SheetDiff>();
+
+        if(!isopenl){
+            for (SheetDiff sh : sheetsA) {
+                SheetDiff shdiff = new SheetDiff();
+                if (sheetsB.contains(sh)) {
+                    shdiff.setSheet(sh.getSheet());
+                    List<RowDiff> rowDiffs = compareSheets(sh, sheetsB.get(sheetsB.indexOf(sh)));
+                    if (rowDiffs != null && !rowDiffs.isEmpty()) {
+                        shdiff.setOperation(Operation.CHANGED);
+                        shdiff.setDifferences(rowDiffs);
+                        diffs.add(shdiff);
+                    }
+                    sheetsB.remove(sh);
+                } else {
+                    shdiff.setOperation(Operation.DELETE);
+                    diffs.add(shdiff);
+                }
+            }
+            for (SheetDiff shd :
+                    sheetsB) {
+                shd.setOperation(Operation.INSERT);
+                diffs.add(shd);
+            }
+        } else {
+
+            for (SheetDiff sh : sheetsA) {
+                SheetDiff shdiff = new SheetDiff();
+                if (sheetsB.contains(sh)) {
+                    shdiff.setSheet(sh.getSheet());
+                    List<OpenLFunction> rowDiffs = compareOpenLSheet(sh, sheetsB.get(sheetsB.indexOf(sh)));
+                    if (rowDiffs != null && !rowDiffs.isEmpty()) {
+                        shdiff.setOperation(Operation.CHANGED);
+                        shdiff.setDifferences(rowDiffs);
+                        diffs.add(shdiff);
+                    }
+                    sheetsB.remove(sh);
+                } else {
+                    shdiff.setOperation(Operation.DELETE);
+                    diffs.add(shdiff);
+                }
+            }
+            for (SheetDiff shd :
+                    sheetsB) {
+                shd.setOperation(Operation.INSERT);
+                diffs.add(shd);
+            }
+        }
+        return diffs;
+    }
+
+
+    public List<SheetDiff> getworkbookSheets(Workbook wb) {
+        List<SheetDiff> sheets = new ArrayList<>();
+        for(int i = 0; i< wb.getNumberOfSheets(); i++){
+            SheetDiff shDiff = new SheetDiff();
+            shDiff.setSheet(wb.getSheetAt(i));
+            sheets.add(shDiff);
+        }
+        return sheets;
+    }
+    public List<Sheet> getworkbookSheets(String path) {
+        Workbook wb = openFile(path);
         List<Sheet> sheets = new ArrayList<Sheet>();
         for(int i = 0; i< wb.getNumberOfSheets(); i++){
             sheets.add(wb.getSheetAt(i));
@@ -64,11 +127,13 @@ public class ExcelCompare {
 
     /**
      *
-     * @param sha
-     * @param shb
+     * @param shda
+     * @param shdb
      * @return
      */
-    public List<RowDiff> compareSheets(Sheet sha, Sheet shb){
+    public List<RowDiff> compareSheets(SheetDiff shda, SheetDiff shdb){
+        Sheet sha = shda.getSheet();
+        Sheet shb = shdb.getSheet();
         int ini = sha.getFirstRowNum()<shb.getFirstRowNum() ? sha.getFirstRowNum() : shb.getFirstRowNum();
         int end = sha.getLastRowNum()>shb.getLastRowNum() ? sha.getLastRowNum() : shb.getLastRowNum();
         return compareSheets(sha, shb, ini, end, 0);
@@ -84,33 +149,49 @@ public class ExcelCompare {
      * @return  List of rows with some changes
      */
     public List<RowDiff> compareSheets(Sheet sha, Sheet shb, int ini, int end, int delta) {
+        System.out.println("\tsheet: " + sha.getSheetName() + " ini:" + ini + "end: " +end);
         List<RowDiff> rows = new ArrayList<RowDiff>();
         //compare first row of rank
         RowDiff row = compareRow(sha, shb, ini, ini+delta);
         //
-        if(row.getOperation() == Operation.CHANGED){
+        if(row != null && (row.getOperation() != Operation.EQUAL
+                            && row.getOperation() != Operation.FULL_CHANGE)){
             rows.add(row);
-        } else if(row.getOperation() == Operation.FULL_CHANGE){
+            ini++;
+            row = compareRow(sha, shb, ini, ini+delta);
+        } else if(row != null && row.getOperation() == Operation.FULL_CHANGE){
+            //comprova si s'han afegit o borrat files
             List<RowDiff> insertRows = checkDeletedAddRow(sha, shb, ini, end, delta);
             if(insertRows == null){
                 row.setOperation(Operation.DELETE);
+                rows.add(row);
                 delta--;
             } else {
+                //row.setOperation(Operation.INSERT);
                 rows.addAll(insertRows);
                 delta += insertRows.size();
             }
-        }
-        //discard firsts equal rows
-        while(ini<end && row.getOperation().compareTo(Operation.EQUAL) == 0){
             ini++;
             row = compareRow(sha, shb, ini, ini+delta);
-            rows.add(row);
+        }
+        //discard firsts equal rows
+        while(ini<end && (row ==null ||row.getOperation().compareTo(Operation.EQUAL) == 0)){
+            ini++;
+            System.out.println("\tsheet: " + sha.getSheetName() + " ini:" + ini + "end: " +end);
+            row = compareRow(sha, shb, ini, ini+delta);
+            if(row != null){
+                rows.add(row);
+            }
         }
         //discard lasts equal rows
-        while(end>ini && row.getOperation().compareTo(Operation.EQUAL) == 0){
+
+        while(end>ini &&  (row ==null || row.getOperation().compareTo(Operation.EQUAL) == 0)){
             end--;
+            System.out.println("\tsheet: " + sha.getSheetName() + " ini:" + ini + "end: " +end);
             row = compareRow(sha, shb, ini, ini+delta);
-            rows.add(row);
+            if(row != null){
+                rows.add(row);
+            }
         }
         //recurive condition
         if(ini<end){
@@ -138,11 +219,11 @@ public class ExcelCompare {
         */
         for(int rowB = rowA+delta; rowB< end;rowB++){
             RowDiff row = compareRow(sha, shb, rowA, rowB);
-            row.setOperation(Operation.INSERT);
-            rows.add(row);
-            if(row.getOperation() == Operation.EQUAL){
+            if(row == null || row.getOperation() == Operation.EQUAL ){
                 return rows;
             }
+            row.setOperation(Operation.INSERT);
+            rows.add(row);
 
         }
         return null;
@@ -168,15 +249,22 @@ public class ExcelCompare {
             return compareRow(sha.getRow(rowA), shb.getRow(rowB), ini, end);
         } else {
             RowDiff row = new RowDiff();
-            if(sha.getRow(rowA)==null){
-                row.setOperation(Operation.INSERT);
-                row.setRowNew(shb.getRow(rowB));
-            } else {
-                row.setOperation(Operation.DELETE);
-                row.setRowNew(sha.getRow(rowA));
+            if(!(sha.getRow(rowA)==null && shb.getRow(rowB)==null)) {
+                if (sha.getRow(rowA) == null) {
+                    row.setOperation(Operation.INSERT);
+                    row.setRowNew(shb.getRow(rowB));
+                } else {
+                    row.setOperation(Operation.DELETE);
+                    row.setRowNew(sha.getRow(rowA));
+                }
+                System.out.println("\t\tRow: " + row.getRowindex() + "(" + row.getOperation() + ")");
+                return row;
             }
-            return row;
+            row.setOperation(Operation.EQUAL);
+            System.out.println("\t\tRow: " + row.getRowindex() + "(" + row.getOperation() + ")");
+            return null;
         }
+
     }
 
     /**
@@ -189,18 +277,26 @@ public class ExcelCompare {
      */
     public RowDiff compareRow(Row rha, Row rhb, int ini, int end) {
         RowDiff row = new RowDiff();
+        row.setRowindex(rhb.getRowNum()+1);
         //compara les cel.les de l' interval
-        for (int i = ini; i < end; i++) {
-            row.getCells().add(compareCell(rha.getCell(i), rhb.getCell(i)));
-        }
         //Check changes affect all row
+        boolean hasChanged = false;
         row.setOperation(Operation.FULL_CHANGE);
-        for(CellDiff cell: row.getCells()) {
-            if(cell.getState().compareTo(Operation.EQUAL)== 0) {
+        for (int i = ini; i < end; i++) {
+            CellDiff cdiff= compareCell(rha.getCell(i), rhb.getCell(i));
+            row.getCells().add(cdiff);
+            if(cdiff.getState().compareTo(Operation.EQUAL)== 0){// && !"".equals(cdiff.getTxtOld())) {
                 row.setOperation(Operation.CHANGED);
+            } else {
+                hasChanged = true;
             }
         }
-        return row;
+
+        System.out.println("\t\tRow: " + row.getRowindex() + "(" + row.getOperation() + ")");
+        if(hasChanged){
+            return row;
+        }
+        return null;
     }
 
     /**
@@ -228,14 +324,69 @@ public class ExcelCompare {
      * @return
      */
     public CellDiff compareCell(Cell ca, Cell cb){
-        LinkedList<diff_match_patch.Diff> diffs = diff.diff_main(ca.getStringCellValue(), cb.getStringCellValue(), true);
-        CellDiff cell = new CellDiff(ca, ca.getStringCellValue(), cb.getStringCellValue(), diffs);
+        CellDiff cell = new CellDiff();
+        String a = getStringfromCell(ca);
+        String b = getStringfromCell(cb);
+        if (a != null && b != null) {
+            LinkedList<diff_match_patch.Diff> diffs = diff.diff_main(a, b, true);
+            cell = new CellDiff(ca, a, b, diffs);
+            //System.out.println("\t\t\tcelda: " + cell.getCell().getAddress() + "(" + cell.getState() + ")");
+        } else {
+            if(!(ca == null && cb == null)){
+                if(a == null){
+                    cell.setState(Operation.INSERT);
+                    cell.setTxtNew(getStringfromCell(cb));
+                } else {
+                    cell.setState(Operation.DELETE);
+                    cell.setTxtOld(getStringfromCell(ca));
+                }
+            } else {
+                cell.setState(Operation.EQUAL);
+            }
+        }
         return cell;
     }
 
-    /*
+    public static String getStringfromCell(Cell cell) {
+        String value = "";
+        if(cell !=null){
+            switch (cell.getCellType()) {
+
+            case Cell.CELL_TYPE_STRING:
+                value = cell.getRichStringCellValue().getString();
+                break;
+
+            case Cell.CELL_TYPE_NUMERIC:
+                if (DateUtil.isCellDateFormatted(cell)) {
+                    value = cell.getDateCellValue().toString();
+                } else {
+                    value = String.valueOf(cell.getNumericCellValue());
+                    if (value.endsWith(".0")) {
+                        value = String.valueOf((int) cell.getNumericCellValue());
+                    }
+                }
+                break;
+
+            case Cell.CELL_TYPE_BOOLEAN:
+                value = String.valueOf(cell.getBooleanCellValue());
+                break;
+
+            case Cell.CELL_TYPE_FORMULA:
+                value = cell.getCellFormula();
+                break;
+            case Cell.CELL_TYPE_BLANK:
+                value = "";
+                break;
+            default:
+                value = "";
+            }
+        }
+        System.out.println(value);
+        return value;
+    }
+    /*************************
     OPENL DIFF COMPARE FUNCS
-     */
+     **************************/
     
     /**
      * Gets the sheet functions.
@@ -251,13 +402,15 @@ public class ExcelCompare {
             Cell cell =sh.getRow(mergCell.getFirstRow()).getCell(mergCell.getFirstColumn());
 
             for (int i = 0; i < types.length; i++) {
-                if(cell.getRichStringCellValue().toString().contains(types[i])){
+                String head = getStringfromCell(cell);
+                if(head.contains(types[i])){
 
                     int lastRow = mergCell.getFirstRow();
                     do {
                         lastRow += 1;
                     }while(!isRowEmpty(sh.getRow(lastRow)));
                     OpenLFunction funcio = new OpenLFunction(sh, cell.getRowIndex(), lastRow, cell.getColumnIndex(), mergCell.getLastColumn());
+                    funcio.setName(head);
                     if(types[i]=="Spreadsheet"){
                         funcio.setType(OpenLFunction.types.SPREADSHEET);
                     } else if(types[i]=="Rules"){
@@ -272,18 +425,21 @@ public class ExcelCompare {
         return functions;
     }
 
-    public List<OpenLFunction> compareOpenLSheet(Sheet sha, Sheet shb){
-        List<OpenLFunction> funcsA = getSheetFunctions(sha);
-        List<OpenLFunction> funcsB = getSheetFunctions(shb);
+    public List<OpenLFunction> compareOpenLSheet(SheetDiff sha, SheetDiff shb){
+        List<OpenLFunction> funcsA = getSheetFunctions(sha.getSheet());
+        List<OpenLFunction> funcsB = getSheetFunctions(shb.getSheet());
         List<OpenLFunction> differences = new ArrayList<OpenLFunction>();
         for (OpenLFunction func
                 : funcsA) {
             if(funcsB.contains(func)){
                 OpenLFunction funcDiff = compareOpenLFunctions(func, funcsB.get(funcsB.indexOf(func)));
-                if (func.getOperation() != Operation.EQUAL){
-                    differences.add(funcDiff);
+                if(funcDiff!=null) {
+                    if (funcDiff.getOperation() != Operation.EQUAL) {
+                        differences.add(funcDiff);
+                    }
                 }
                 funcsB.remove(func);
+
             } else {
                 func.setOperation(Operation.DELETE);
                 differences.add(func);
@@ -302,13 +458,14 @@ public class ExcelCompare {
     public OpenLFunction compareOpenLFunctions(OpenLFunction funa, OpenLFunction funb){
         int ini = funa.getFirstRow();
         int end = funa.getLastRow() >= funb.getLastRow() ?  funa.getLastRow() : funb.getLastRow();
-        int delta = funb.getFirstRow() - funa.getFirstCol();
+        int delta = funb.getFirstRow() - funa.getFirstRow();
         List<RowDiff> rowDiffs = compareSheets(funa.getSheet(), funb.getSheet(), ini, end, delta);
         funb.setDiferences(rowDiffs);
         if(rowDiffs.isEmpty()){
             return null;
         }
-        return null;
+        funb.setOperation(Operation.CHANGED);
+        return funb;
     }
     
 }

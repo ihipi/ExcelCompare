@@ -78,14 +78,55 @@ public class RowDiff {
     }
 
     @Override
-    public String toString(){
+    public String toString() {
+        String op = "";
+        switch (operation){
+            case FULL_CHANGE:
+                op = "FULL_CHANGE";
+                break;
+            case EQUAL:
+                op = "EQUAL";
+                break;
+            case DELETE:
+                op = "DELETE";
+                break;
+            case INSERT:
+                op = "INSERT";
+                break;
+            case CHANGED:
+                op = "CHANGED";
+                break;
+        }
+
+        return op+ " - " + String.valueOf(this.getRowindex());
+    }
+
+    public String toHtmlString(){
         StringBuilder str = new StringBuilder();
         str.append("<tr>");
         for (CellDiff cell:
              this.cells) {
-            str.append("<td>").append(cell.toString()).append("</td>");
+            str.append("<td>");
+            if(operation == Operation.INSERT){
+                str.append(cell.getTxtNew());
+            } else if(operation == Operation.DELETE){
+                str.append(cell.getTxtOld());
+            }else{
+                str.append(cell.toHtmlString());
+            }
+            str.append("</td>");
         }
         str.append("</tr>");
         return str.toString();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof RowDiff)) return false;
+        RowDiff rowDiff = (RowDiff) o;
+        return getRowindex() == rowDiff.getRowindex();
+    }
+
+
 }

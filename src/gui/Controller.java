@@ -4,15 +4,20 @@ import core.ExcelCompare;
 import core.diff_match_patch;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.ToggleGroup;
+import javafx.scene.Node;
+import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
+import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import org.apache.poi.ss.usermodel.Workbook;
+import model.OpenLFunction;
+import model.RowDiff;
+import model.SheetDiff;
 
 import java.io.File;
 import java.net.URL;
@@ -43,16 +48,68 @@ public class Controller {
     private TextArea txtB;
 
     @FXML
+    private WebView webView = new WebView();
+    //@FXML
+    //private final WebEngine webEngine = webView.getEngine();
+
+    @FXML
     public void compareFiles(ActionEvent actionEvent) {
         if(!txtA.getText().isEmpty() && !txtB.getText().isEmpty()) {
-            Workbook wbA = eCompare.openFile(txtA.getText());
-            Workbook wbB = eCompare.openFile(txtB.getText());
-            boolean isopenl = false;
+            //Workbook wbA = eCompare.openFile(txtA.getText());
+            //Workbook wbB = eCompare.openFile(txtB.getText());
+
+            //List<Sheet> sha = eCompare.getworkbookSheets(txtA.getText());
+            //List<Sheet> shb = eCompare.getworkbookSheets(txtB.getText());
+
+            boolean isOpenL = false;
             if("OpenL".equalsIgnoreCase(toggleGroup.getSelectedToggle().toString())){
-                isopenl = true;
+                isOpenL = true;
             }
-            eCompare.compareWorkbooks(wbA, wbB, isopenl);
+            List<SheetDiff> diffs = eCompare.compareWorkbooks(txtA.getText(), txtB.getText(), isOpenL);
+            populateTree(diffs, isOpenL);
+
+
         }
+    }
+
+    private void populateTree(List<SheetDiff> diffs, boolean isOpenL) {
+        String[] pathSplited = txtA.getText().split("/");
+        String rootIcon = isOpenL? "openl.png" : "excel.png";
+        Node icon = new ImageView(new Image(rootIcon));
+        TreeItem<Object> root= new TreeItem<Object>(pathSplited[pathSplited.length-1], icon );
+        for (SheetDiff shd :
+                diffs) {
+
+            Node shIcon = new ImageView(new Image("row_mod.png"));
+            System.out.println(shd.getSheet().getSheetName());
+            TreeItem<Object> shTree = new TreeItem<Object>(shd.getSheet().getSheetName(), shIcon);
+            for (Object  diff:
+                    shd.getDifferences()) {
+                if(diff instanceof RowDiff){
+                    Node rowIcon = new ImageView(new Image("row_add.png"));
+                    RowDiff row = (RowDiff) diff;
+                    TreeItem<Object> rowTree = new TreeItem<Object>(row, rowIcon);
+                    shTree.getChildren().add(rowTree);
+
+                } else if(diff instanceof OpenLFunction){
+                    Node rowIcon = new ImageView(new Image("row_add.png"));
+                    OpenLFunction fun = (OpenLFunction) diff;
+                    if(fun.getDiferences().size()>0) {
+                        TreeItem<Object> funTree = new TreeItem<Object>(fun, rowIcon);
+
+                        for (RowDiff row :
+                                fun.getDiferences()) {
+                            TreeItem<Object> rowTree = new TreeItem<Object>(row, rowIcon);
+                            funTree.getChildren().add(rowTree);
+                        }
+                        shTree.getChildren().add(funTree);
+                    }
+                }
+            }
+
+            root.getChildren().add(shTree);
+        }
+        tree.setRoot(root);
     }
 
     @FXML
@@ -110,4 +167,27 @@ public class Controller {
         }
     }
 
+    @FXML
+    TreeView<Object> tree;
+
+    @FXML
+    public void updateWebView(MouseEvent mouseEvent) {
+        TreeItem<Object> selectionItem = tree.getSelectionModel().getSelectedItem();
+        if(selectionItem != null){
+            Object obj = selectionItem.getValue();
+            String html = "";
+            if(obj instanceof RowDiff) {
+                html = "<table  border=\"1px solid black\">";
+                html += ((RowDiff)obj).toHtmlString();
+                html += "</table>";
+            }else if(obj instanceof OpenLFunction){
+                html = ((OpenLFunction)obj).toHtmlString();
+            }
+            System.out.println(html);
+            webView.getEngine().loadContent(html);
+
+            webView.getEngine().reload();
+        }
+
+    }
 }

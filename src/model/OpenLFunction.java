@@ -1,8 +1,10 @@
 package model;
 
+import core.ExcelCompare;
 import core.diff_match_patch.Operation;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellRange;
+import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 
 import java.util.ArrayList;
@@ -10,6 +12,8 @@ import java.util.Iterator;
 import java.util.List;
 
 public class OpenLFunction implements CellRange {
+
+
 
     public static enum types {SPREADSHEET, RULES, METHOD};
 
@@ -25,8 +29,8 @@ public class OpenLFunction implements CellRange {
     private List<RowDiff> diferences = new ArrayList<RowDiff>();
 
 
-    public OpenLFunction(Sheet sheet, int firstRow, int firstCol, int lastRow, int lastCol) {
-        this.name = this.getTopLeftCell().getRichStringCellValue().toString();
+    public OpenLFunction(Sheet sheet, int firstRow, int lastRow, int firstCol, int lastCol) {
+        //this.name = this.getTopLeftCell().getRichStringCellValue().toString();
         this.sheet = sheet;
         this.firstRow = firstRow;
         this.firstCol = firstCol;
@@ -35,7 +39,7 @@ public class OpenLFunction implements CellRange {
     }
 
     public OpenLFunction( Sheet sheet, int firstRow, int firstCol, int lastRow, int lastCol, types type) {
-        this.name = this.getTopLeftCell().getRichStringCellValue().toString();
+        //this.name = this.getTopLeftCell().getRichStringCellValue().toString();
         this.type = type;
         this.sheet = sheet;
         this.firstRow = firstRow;
@@ -45,7 +49,7 @@ public class OpenLFunction implements CellRange {
     }
 
     public OpenLFunction( Sheet sheet, int firstRow, int firstCol, int lastRow, int lastCol, Operation op) {
-        this.name = this.getTopLeftCell().getRichStringCellValue().toString();
+        //this.name = this.getTopLeftCell().getRichStringCellValue().toString();
         this.type = type;
         this.sheet = sheet;
         this.firstRow = firstRow;
@@ -188,14 +192,49 @@ public class OpenLFunction implements CellRange {
         this.diferences = diferences;
     }
 
+    public RowDiff getDiffAtRow(int i){
+        for(RowDiff rd: diferences) {
+            if (rd.getRowindex() - 1 == i) {
+                return rd;
+            }
+        }
+        return null;
+    }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof OpenLFunction)) return false;
         OpenLFunction that = (OpenLFunction) o;
-        return getTopLeftCell().getRichStringCellValue().toString().equals(
-                 that.getTopLeftCell().getRichStringCellValue().toString());
+        return name.equals(that.getName());
     }
+    public String toHtmlString() {
+        StringBuilder str = new StringBuilder();
+        str.append("<table style=\"border: 2px single black;\">");
+        str.append("<tr><th colspan=").append(getWidth()).append(">");
+        str.append(name).append("</th></tr>");
+        for(int i = this.firstRow+1; i< this.lastRow;i++){
 
+                if (getDiffAtRow(i) != null){
+                    str.append(getDiffAtRow(i).toHtmlString());
+                } else {
+                    Row row = sheet.getRow(i);
+                    str.append("<tr style=\"background: #b4b4b4;\">");
+                    for(int j = firstCol;j< lastCol; j++){
+                        str.append("<td style = \"thin single black collapse;\">");
+                        str.append(ExcelCompare.getStringfromCell(row.getCell(j)));
+                        str.append("</td>");
+                    }
+                    str.append("</tr>");
+
+            }
+        }
+        str.append("</table>");
+        return str.toString();
+    }
+    @Override
+    public String toString() {
+        return getTopLeftCell().getAddress() + " - "
+                +getTopLeftCell().getRichStringCellValue().toString();
+    }
 }
