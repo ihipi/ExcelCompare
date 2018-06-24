@@ -31,7 +31,8 @@ public class Controller {
 
     @FXML
     private ToggleGroup toggleGroup;
-
+    @FXML
+    private RadioButton openl;
     @FXML
     private ResourceBundle resources;
 
@@ -62,7 +63,7 @@ public class Controller {
             //List<Sheet> shb = eCompare.getworkbookSheets(txtB.getText());
 
             boolean isOpenL = false;
-            if("OpenL".equalsIgnoreCase(toggleGroup.getSelectedToggle().toString())){
+            if(openl.equals(toggleGroup.getSelectedToggle())){
                 isOpenL = true;
             }
             List<SheetDiff> diffs = eCompare.compareWorkbooks(txtA.getText(), txtB.getText(), isOpenL);

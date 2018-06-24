@@ -34,11 +34,11 @@
                 <fx:define>
                   <ToggleGroup fx:id="toggleGroup" />
                 </fx:define>
-                <RadioButton layoutX="14.0" layoutY="14.0" mnemonicParsing="false" selected="true" text="OpenL">
+                <RadioButton fx:id="openl" layoutX="14.0" layoutY="14.0" mnemonicParsing="false" selected="true" text="OpenL">
                            <toggleGroup>
                               <ToggleGroup fx:id="toggleGroup" />
                            </toggleGroup></RadioButton>
-                <RadioButton layoutX="123.0" layoutY="14.0" mnemonicParsing="false" text="Excel" toggleGroup="$toggleGroup" />
+                <RadioButton fx:id="excel" layoutX="123.0" layoutY="14.0" mnemonicParsing="false" text="Excel" toggleGroup="$toggleGroup" />
                 <Button fx:id="btnCompare" layoutX="67.0" layoutY="49.0" mnemonicParsing="false" onAction="#compareFiles" text="Compare" />
                 <Button layoutX="75.0" layoutY="89.0" mnemonicParsing="false" text="Clean" />
               </children>

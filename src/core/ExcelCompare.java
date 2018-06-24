@@ -195,7 +195,7 @@ public class ExcelCompare {
         }
         //recurive condition
         if(ini<end){
-            compareSheets(sha, shb, ini, end, delta);
+            rows.addAll(compareSheets(sha, shb, ini, end, delta));
         }
         return rows;
 
