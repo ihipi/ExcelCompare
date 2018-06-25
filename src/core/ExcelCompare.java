@@ -163,14 +163,21 @@ public class ExcelCompare {
             //comprova si s'han afegit o borrat files
             List<RowDiff> insertRows = checkDeletedAddRow(sha, shb, ini, end, delta);
             if(insertRows == null){
+                //null = deleted Row decrease delta
                 row.setOperation(Operation.DELETE);
                 rows.add(row);
                 delta--;
-            } else {
+            } else if(insertRows.size()>0){
+                //insertedRows increase delta
                 //row.setOperation(Operation.INSERT);
                 rows.addAll(insertRows);
                 delta += insertRows.size();
+            } else {
+                // else is a fullChangeRow
+                rows.add(row);
             }
+
+
             ini++;
             row = compareRow(sha, shb, ini, ini+delta);
         }
@@ -179,9 +186,7 @@ public class ExcelCompare {
             ini++;
             System.out.println("\tsheet: " + sha.getSheetName() + " ini:" + ini + "end: " +end);
             row = compareRow(sha, shb, ini, ini+delta);
-            if(row != null){
-                rows.add(row);
-            }
+
         }
         //discard lasts equal rows
 
@@ -189,9 +194,7 @@ public class ExcelCompare {
             end--;
             System.out.println("\tsheet: " + sha.getSheetName() + " ini:" + ini + "end: " +end);
             row = compareRow(sha, shb, ini, ini+delta);
-            if(row != null){
-                rows.add(row);
-            }
+
         }
         //recurive condition
         if(ini<end){
@@ -209,8 +212,10 @@ public class ExcelCompare {
      * @param rowA
      * @param end
      * @param delta
-     * @return
-     */
+     * @return null         -> is a deleted row
+     *         Empty list   -> FullChange row
+     *         List.size > 0-> InsertedRows
+      */
     private List<RowDiff> checkDeletedAddRow(Sheet sha, Sheet shb, int rowA, int end, int delta) {
         List<RowDiff> rows = new ArrayList<RowDiff>();
         /* iterate rows searching the same row
@@ -226,6 +231,12 @@ public class ExcelCompare {
             rows.add(row);
 
         }
+        rows = new ArrayList<RowDiff>();
+        RowDiff row = compareRow(sha, shb, rowA+1, end+1);
+        //while((rowA+1<sha.getLastRowNum() && end+1<shb.getLastRowNum()) &&
+        if(row ==null || row.getOperation() == Operation.EQUAL){
+            return rows;
+        }
         return null;
     }
 
@@ -239,7 +250,7 @@ public class ExcelCompare {
      * @param shb
      * @param rowA
      * @param rowB
-     * @return
+     * @return if Equal == return null
      */
     public RowDiff compareRow(Sheet sha, Sheet shb, int rowA, int rowB) {
         if(sha.getRow(rowA)!=null && shb.getRow(rowB)!=null){
@@ -273,7 +284,7 @@ public class ExcelCompare {
      * @param rhb
      * @param ini
      * @param end
-     * @return
+     * @return if EQUAL => null
      */
     public RowDiff compareRow(Row rha, Row rhb, int ini, int end) {
         RowDiff row = new RowDiff();

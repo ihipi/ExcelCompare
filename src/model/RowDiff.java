@@ -26,7 +26,7 @@ public class RowDiff {
     }
 
     public RowDiff() {
-
+    rowindex = 0;
     }
 
     public Row getRowOld() {
@@ -103,20 +103,24 @@ public class RowDiff {
 
     public String toHtmlString(){
         StringBuilder str = new StringBuilder();
-        str.append("<tr>");
-        for (CellDiff cell:
-             this.cells) {
-            str.append("<td>");
-            if(operation == Operation.INSERT){
-                str.append(cell.getTxtNew());
-            } else if(operation == Operation.DELETE){
-                str.append(cell.getTxtOld());
-            }else{
-                str.append(cell.toHtmlString());
+        if (getCells().size()>0) {
+            str.append("<tr>");
+            for (CellDiff cell:
+                 this.cells) {
+                str.append("<td>");
+                if(operation == Operation.INSERT){
+                    str.append(cell.getTxtNew());
+                } else if(operation == Operation.DELETE){
+                    str.append(cell.getTxtOld());
+                }else{
+                    str.append(cell.toHtmlString());
+                }
+                str.append("</td>");
             }
-            str.append("</td>");
+            str.append("</tr>");
+        } else {
+            str.append("Unseted");
         }
-        str.append("</tr>");
         return str.toString();
     }
 
