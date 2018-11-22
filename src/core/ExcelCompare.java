@@ -18,20 +18,35 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+// TODO: Auto-generated Javadoc
+/**
+ * The Class ExcelCompare.
+ *
+ * @author agiroque
+ */
 public class ExcelCompare {
 
+    /** The types. */
     private static String[] types = {"Spreadsheet", "Rules", "Method"};
+    
+    /** The format. */
     DataFormatter format = new DataFormatter();
+    
+    /** The diff. */
     private diff_match_patch diff = new diff_match_patch();
 
 
+    /**
+     * Instantiates a new excel compare.
+     */
     public ExcelCompare() {
     }
 
     /**
+     * Open file.
      *
-     * @param path
-     * @return
+     * @param path the path
+     * @return the workbook
      */
     public Workbook openFile(String path){
 
@@ -44,12 +59,27 @@ public class ExcelCompare {
         return null;
     }
 
+    /**
+     * Compare workbooks.
+     *
+     * @param wba the wba
+     * @param wbb the wbb
+     * @param isopenl the isopenl
+     */
     public void compareWorkbooks(Workbook wba, Workbook wbb, boolean isopenl){
         List<SheetDiff> sheetsA = getworkbookSheets(wba);
         List<SheetDiff> sheetsB = getworkbookSheets(wbb);
 
     }
 
+    /**
+     * Compare workbooks.
+     *
+     * @param wbPathA the wb path A
+     * @param wbPathB the wb path B
+     * @param isopenl the isopenl
+     * @return the list
+     */
     public List<SheetDiff> compareWorkbooks(String wbPathA, String wbPathB, boolean isopenl){
         Workbook wba = openFile(wbPathA);
         Workbook wbb = openFile(wbPathB);
@@ -107,6 +137,12 @@ public class ExcelCompare {
     }
 
 
+    /**
+     * Gets the workbook sheets.
+     *
+     * @param wb the wb
+     * @return the workbook sheets
+     */
     public List<SheetDiff> getworkbookSheets(Workbook wb) {
         List<SheetDiff> sheets = new ArrayList<>();
         for(int i = 0; i< wb.getNumberOfSheets(); i++){
@@ -116,6 +152,13 @@ public class ExcelCompare {
         }
         return sheets;
     }
+    
+    /**
+     * Gets the workbook sheets.
+     *
+     * @param path the path
+     * @return the workbook sheets
+     */
     public List<Sheet> getworkbookSheets(String path) {
         Workbook wb = openFile(path);
         List<Sheet> sheets = new ArrayList<Sheet>();
@@ -126,10 +169,11 @@ public class ExcelCompare {
     }
 
     /**
+     * Compare sheets.
      *
-     * @param shda
-     * @param shdb
-     * @return
+     * @param shda the shda
+     * @param shdb the shdb
+     * @return the list
      */
     public List<RowDiff> compareSheets(SheetDiff shda, SheetDiff shdb){
         Sheet sha = shda.getSheet();
@@ -140,7 +184,8 @@ public class ExcelCompare {
     }
 
     /**
-     * comparae two sheets
+     * comparae two sheets.
+     *
      * @param sha left sheet
      * @param shb rigth sheet
      * @param ini first row to analize
@@ -206,16 +251,17 @@ public class ExcelCompare {
 
 
     /**
+     * Check deleted add row.
      *
-     * @param sha
-     * @param shb
-     * @param rowA
-     * @param end
-     * @param delta
+     * @param sha the sha
+     * @param shb the shb
+     * @param rowA the row A
+     * @param end the end
+     * @param delta the delta
      * @return null         -> is a deleted row
      *         Empty list   -> FullChange row
      *         List.size > 0-> InsertedRows
-      */
+     */
     private List<RowDiff> checkDeletedAddRow(Sheet sha, Sheet shb, int rowA, int end, int delta) {
         List<RowDiff> rows = new ArrayList<RowDiff>();
         /* iterate rows searching the same row
@@ -245,11 +291,12 @@ public class ExcelCompare {
     }*/
 
     /**
+     * Compare row.
      *
-     * @param sha
-     * @param shb
-     * @param rowA
-     * @param rowB
+     * @param sha the sha
+     * @param shb the shb
+     * @param rowA the row A
+     * @param rowB the row B
      * @return if Equal == return null
      */
     public RowDiff compareRow(Sheet sha, Sheet shb, int rowA, int rowB) {
@@ -279,11 +326,12 @@ public class ExcelCompare {
     }
 
     /**
+     * Compare row.
      *
-     * @param rha
-     * @param rhb
-     * @param ini
-     * @param end
+     * @param rha the rha
+     * @param rhb the rhb
+     * @param ini the ini
+     * @param end the end
      * @return if EQUAL => null
      */
     public RowDiff compareRow(Row rha, Row rhb, int ini, int end) {
@@ -292,19 +340,26 @@ public class ExcelCompare {
         //compara les cel.les de l' interval
         //Check changes affect all row
         boolean hasChanged = false;
+        boolean isequal = false;
         row.setOperation(Operation.FULL_CHANGE);
-        for (int i = ini; i < end; i++) {
+        for (int i = ini; i <= end; i++) {
             CellDiff cdiff= compareCell(rha.getCell(i), rhb.getCell(i));
             row.getCells().add(cdiff);
             if(cdiff.getState().compareTo(Operation.EQUAL)== 0){// && !"".equals(cdiff.getTxtOld())) {
-                row.setOperation(Operation.CHANGED);
+                row.setOperation(Operation.EQUAL);
+                isequal = true;
             } else {
+                row.setOperation(Operation.CHANGED);
                 hasChanged = true;
             }
         }
 
         System.out.println("\t\tRow: " + row.getRowindex() + "(" + row.getOperation() + ")");
-        if(hasChanged){
+        if(hasChanged && isequal){
+            row.setOperation(Operation.CHANGED);
+            return row;
+        } else if (hasChanged) {
+            row.setOperation(Operation.FULL_CHANGE);
             return row;
         }
         return null;
@@ -329,17 +384,18 @@ public class ExcelCompare {
     }
 
     /**
+     * Compare cell.
      *
-     * @param ca
-     * @param cb
-     * @return
+     * @param ca the ca
+     * @param cb the cb
+     * @return the cell diff
      */
     public CellDiff compareCell(Cell ca, Cell cb){
         CellDiff cell = new CellDiff();
         String a = getStringfromCell(ca);
         String b = getStringfromCell(cb);
         if (a != null && b != null) {
-            LinkedList<diff_match_patch.Diff> diffs = diff.diff_main(a, b, true);
+            LinkedList<diff_match_patch.Diff> diffs = diff.diff_main(a, b);
             cell = new CellDiff(ca, a, b, diffs);
             //System.out.println("\t\t\tcelda: " + cell.getCell().getAddress() + "(" + cell.getState() + ")");
         } else {
@@ -358,6 +414,12 @@ public class ExcelCompare {
         return cell;
     }
 
+    /**
+     * Gets the stringfrom cell.
+     *
+     * @param cell the cell
+     * @return the stringfrom cell
+     */
     public static String getStringfromCell(Cell cell) {
         String value = "";
         if(cell !=null){
@@ -395,9 +457,15 @@ public class ExcelCompare {
         System.out.println(value);
         return value;
     }
-    /*************************
-    OPENL DIFF COMPARE FUNCS
-     **************************/
+    
+    /**
+     * ***********************
+     *     OPENL DIFF COMPARE FUNCS
+     * ************************.
+     *
+     * @param sh the sh
+     * @return the sheet functions
+     */
     
     /**
      * Gets the sheet functions.
@@ -408,40 +476,70 @@ public class ExcelCompare {
     public List<OpenLFunction> getSheetFunctions(Sheet sh) {
         System.out.println(sh.getSheetName());
         List<OpenLFunction> functions = new ArrayList<OpenLFunction>();
+        //TODO buescar funcions amb un altre metode 
+        
         List<CellRangeAddress> merged = sh.getMergedRegions();
-        for (CellRangeAddress mergCell : merged) {
-            Cell cell =sh.getRow(mergCell.getFirstRow()).getCell(mergCell.getFirstColumn());
-
-            for (int i = 0; i < types.length; i++) {
-                String head = getStringfromCell(cell);
-                if(head.contains(types[i])){
-
-                    int lastRow = mergCell.getFirstRow();
-                    do {
-                        lastRow += 1;
-                    }while(!isRowEmpty(sh.getRow(lastRow)));
-                    OpenLFunction funcio = new OpenLFunction(sh, cell.getRowIndex(), lastRow, cell.getColumnIndex(), mergCell.getLastColumn());
-                    funcio.setName(head);
-                    if(types[i]=="Spreadsheet"){
-                        funcio.setType(OpenLFunction.types.SPREADSHEET);
-                    } else if(types[i]=="Rules"){
-                        funcio.setType(OpenLFunction.types.RULES);
-                    } else if(types[i]=="Method"){
-                        funcio.setType(OpenLFunction.types.METHOD);
-                    }
-                    functions.add(funcio);
-                }
-            }
-        }
+        
+        
+		for (int i = sh.getFirstRowNum(); i < sh.getLastRowNum(); i++) {
+			
+			Row row = sh.getRow(i);
+			if (row != null){
+			for (Cell cell : row) {
+				for (int type = 0; type < types.length; type++) {
+					if(cell.CELL_TYPE_STRING == cell.getCellType() && cell.getStringCellValue().contains(types[type])){
+						OpenLFunction func = new OpenLFunction(sh,getFunctionDimension(cell), types[type]);
+						functions.add(func);
+					}
+				}
+			}
+			}
+		}
+//        for (CellRangeAddress mergCell : merged) {
+//            Cell cell =sh.getRow(mergCell.getFirstRow()).getCell(mergCell.getFirstColumn());
+//
+//            for (int i = 0; i < types.length; i++) {
+//                String head = getStringfromCell(cell);
+//                if(head.contains(types[i])){
+//
+//                    int lastRow = mergCell.getFirstRow();
+//                    do {
+//                        lastRow += 1;
+//                    }while(!isRowEmpty(sh.getRow(lastRow)));
+//                    OpenLFunction funcio = new OpenLFunction(sh, cell.getRowIndex(), lastRow, cell.getColumnIndex(), mergCell.getLastColumn());
+//                    funcio.setName(head);
+//                    if(types[i]=="Spreadsheet"){
+//                        funcio.setType(OpenLFunction.types.SPREADSHEET);
+//                    } else if(types[i]=="Rules"){
+//                        funcio.setType(OpenLFunction.types.RULES);
+//                    } else if(types[i]=="Method"){
+//                        funcio.setType(OpenLFunction.types.METHOD);
+//                    }
+//                    functions.add(funcio);
+//                }
+//            }
+//        }
         return functions;
     }
+    private CellRangeAddress getFunctionCells(Cell initCell) {
+    	
+    	return null;
+    }
 
+    /**
+     * Compare openL funtions in a sheet sheet.
+     *
+     * @param sha the sha
+     * @param shb the shb
+     * @return the list
+     */
     public List<OpenLFunction> compareOpenLSheet(SheetDiff sha, SheetDiff shb){
         List<OpenLFunction> funcsA = getSheetFunctions(sha.getSheet());
         List<OpenLFunction> funcsB = getSheetFunctions(shb.getSheet());
         List<OpenLFunction> differences = new ArrayList<OpenLFunction>();
         for (OpenLFunction func
                 : funcsA) {
+        	//
             if(funcsB.contains(func)){
                 OpenLFunction funcDiff = compareOpenLFunctions(func, funcsB.get(funcsB.indexOf(func)));
                 if(funcDiff!=null) {
@@ -465,7 +563,14 @@ public class ExcelCompare {
         }
         return differences;
     }
-
+    
+    /**
+     * Compare openL A-B functions.
+     *
+     * @param funa the funa
+     * @param funb the funb
+     * @return the open L function
+     */
     public OpenLFunction compareOpenLFunctions(OpenLFunction funa, OpenLFunction funb){
         int ini = funa.getFirstRow();
         int end = funa.getLastRow() >= funb.getLastRow() ?  funa.getLastRow() : funb.getLastRow();
@@ -478,5 +583,120 @@ public class ExcelCompare {
         funb.setOperation(Operation.CHANGED);
         return funb;
     }
-    
+    public static CellRangeAddress getFunctionDimension(Cell header){
+		int iniX = header.getColumnIndex();
+		int iniY = header.getRowIndex();
+		int finX = getFuncWith(header);
+		int finY = header.getRowIndex();
+		int rowNum = header.getRow().getRowNum();
+		
+		
+		//calc height
+		while (!isRowEmpty(header.getSheet().getRow(rowNum),finX)) {
+			finY++;
+			rowNum++;
+		}
+		
+		return new CellRangeAddress(iniY, finY, iniX, finX);
+
+	}
+
+	private static int getFuncWith(Cell header) {
+		
+		int width = getCellLastColumns(header);
+		
+		if (header.getStringCellValue().contains(types[0])){
+			//with of spreadsheet
+			//search for RETURN and get next cell width
+			int end = header.getRowIndex() + 1;
+			Row r = header.getSheet().getRow(end);
+			Cell c = r.getCell(header.getColumnIndex());
+			for (Cell cell : r) {
+				if (cell != null &&
+						cell.getCellType() == cell.CELL_TYPE_STRING 
+						&& cell.getStringCellValue().equalsIgnoreCase("return")) {
+					end = r.getRowNum();
+					break;
+				}
+			}
+//			while ( end <= header.getSheet().getLastRowNum() && !c.getStringCellValue().equalsIgnoreCase("return")) {
+//				end++;
+//			}
+			width =  getCellLastColumns(header.getSheet().getRow(end).getCell(header.getColumnIndex()+1));
+		} else if (header.getStringCellValue().contains(types[1])){
+			//with of Rule
+			//search for RULE and get next RET cell
+
+			int end = header.getRowIndex() + 1;
+			Row r = header.getSheet().getRow(end);
+			Cell c = r.getCell(header.getColumnIndex());
+			for (Cell cell : r) {
+				if (cell != null &&
+						cell.getCellType() == cell.CELL_TYPE_STRING 
+						&& cell.getStringCellValue().equalsIgnoreCase("rule")) {
+					end = r.getRowNum();
+					break;
+				}
+			}
+//			while (end <= header.getSheet().getLastRowNum() && (  !c.getStringCellValue().equalsIgnoreCase("rule"))) {
+//				end++;
+//				c = header.getSheet().getRow(end).getCell(header.getColumnIndex());
+//			}
+			
+			System.out.println(header);
+			for (int i = header.getSheet().getRow(end).getFirstCellNum(); i < header.getRow().getLastCellNum(); i++) {
+				Cell cell = header.getSheet().getRow(end).getCell(i);
+				if(cell != null && cell.getCellType() == cell.CELL_TYPE_STRING 
+						&& cell.getStringCellValue().equalsIgnoreCase("RET")) {
+					width = i;
+					break;
+				}
+			}
+			
+		} else {
+			/* with of Method
+			 * default 1 row
+			 * if merged cell last column
+			 */
+			width = getCellLastColumns(header);
+		}
+		return width;
+	}
+
+	/**
+	 * Calculate the width of cell merged or not
+	 * @param header
+	 * @param width
+	 * @return the last column
+	 */
+	private static int getCellLastColumns(Cell header) {
+		int width = header.getColumnIndex();
+		if(header.getSheet().getNumMergedRegions()>0) {
+			for (int i = 0; i < header.getSheet().getNumMergedRegions(); i++) {
+				CellRangeAddress mergCell= header.getSheet().getMergedRegion(i);
+				if(mergCell.isInRange(header)) {
+					width = mergCell.getLastColumn();
+				}
+			}
+		}
+		return width;
+	}
+
+
+	public static boolean isRowEmpty(Row row, int width) {
+
+	    if (row != null) {
+			for (int c = row.getFirstCellNum(); c <= width; c++) {
+				Cell cell = row.getCell(c);
+				if (cell != null && cell.getCellType() != Cell.CELL_TYPE_BLANK)
+					return false;
+			} 
+		}
+		return true;
+	}	
+	private static boolean isHeader() {
+		return false;
+	}
+	 
+	
 }

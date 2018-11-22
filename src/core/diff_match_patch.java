@@ -204,7 +204,7 @@ public class diff_match_patch {
             diffs.addLast(new Diff(Operation.EQUAL, commonsuffix));
         }
 
-        diff_cleanupMerge(diffs);
+        diff_cleanupSemantic(diffs);
         return diffs;
     }
 
@@ -277,7 +277,7 @@ public class diff_match_patch {
             return diffs;
         }
 
-        if (checklines && text1.length() > 100 && text2.length() > 100) {
+        if (checklines && text1.length() > 10 && text2.length() > 10) {
             return diff_lineMode(text1, text2, deadline);
         }
 
@@ -525,6 +525,30 @@ public class diff_match_patch {
         String chars2 = diff_linesToCharsMunge(text2, lineArray, lineHash, 65535);
         return new LinesToCharsResult(chars1, chars2, lineArray);
     }
+    /**
+     * Split two texts into a list of strings.  Reduce the texts to a string of
+     * hashes where each Unicode character represents one line.
+     * @param text1 First string.
+     * @param text2 Second string.
+     * @return An object containing the encoded text1, the encoded text2 and
+     *     the List of unique strings.  The zeroth element of the List of
+     *     unique strings is intentionally blank.
+     */
+    protected LinesToCharsResult diff_linesToWords(String text1, String text2) {
+        List<String> lineArray = new ArrayList<String>();
+        Map<String, Integer> lineHash = new HashMap<String, Integer>();
+        // e.g. linearray[4] == "Hello\n"
+        // e.g. linehash.get("Hello\n") == 4
+
+        // "\x00" is a valid character, but various debuggers don't like it.
+        // So we'll insert a junk entry to avoid generating a null character.
+        lineArray.add("");
+
+        // Allocate 2/3rds of the space for text1, the rest for text2.
+        String chars1 = diff_linesToCharsWords(text1, lineArray, lineHash, 40000);
+        String chars2 = diff_linesToCharsWords(text2, lineArray, lineHash, 65535);
+        return new LinesToCharsResult(chars1, chars2, lineArray);
+    }
 
     /**
      * Split a text into a list of strings.  Reduce the texts to a string of
@@ -545,7 +569,50 @@ public class diff_match_patch {
         // text.split('\n') would would temporarily double our memory footprint.
         // Modifying text would create many large strings to garbage collect.
         while (lineEnd < text.length() - 1) {
+        	//TODO \n => lines  | " " words
             lineEnd = text.indexOf('\n', lineStart);
+            if (lineEnd == -1) {
+                lineEnd = text.length() - 1;
+            }
+            line = text.substring(lineStart, lineEnd + 1);
+
+            if (lineHash.containsKey(line)) {
+                chars.append(String.valueOf((char) (int) lineHash.get(line)));
+            } else {
+                if (lineArray.size() == maxLines) {
+                    // Bail out at 65535 because
+                    // String.valueOf((char) 65536).equals(String.valueOf(((char) 0)))
+                    line = text.substring(lineStart);
+                    lineEnd = text.length();
+                }
+                lineArray.add(line);
+                lineHash.put(line, lineArray.size() - 1);
+                chars.append(String.valueOf((char) (lineArray.size() - 1)));
+            }
+            lineStart = lineEnd + 1;
+        }
+        return chars.toString();
+    }
+    /**
+     * Split a text into a list of strings.  Reduce the texts to a string of
+     * hashes where each Unicode character represents one line.
+     * @param text String to encode.
+     * @param lineArray List of unique strings.
+     * @param lineHash Map of strings to indices.
+     * @param maxLines Maximum length of lineArray.
+     * @return Encoded string.
+     */
+    private String diff_linesToCharsWords(String text, List<String> lineArray,
+                                          Map<String, Integer> lineHash, int maxLines) {
+        int lineStart = 0;
+        int lineEnd = -1;
+        String line;
+        StringBuilder chars = new StringBuilder();
+        // Walk the text, pulling out a substring for each line.
+        // text.split('\n') would would temporarily double our memory footprint.
+        // Modifying text would create many large strings to garbage collect.
+        while (lineEnd < text.length() - 1) {
+            lineEnd = text.indexOf(' ', lineStart);
             if (lineEnd == -1) {
                 lineEnd = text.length() - 1;
             }

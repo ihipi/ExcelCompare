@@ -75,26 +75,33 @@ public class Controller {
 
     private void populateTree(List<SheetDiff> diffs, boolean isOpenL) {
         String[] pathSplited = txtA.getText().split("/");
-        String rootIcon = isOpenL? "openl.png" : "excel.png";
+        String rootIcon = isOpenL? "/resources/icons/openl.png" : "/resources/icons/excel.png";
         Node icon = new ImageView(new Image(rootIcon));
         TreeItem<Object> root= new TreeItem<Object>(pathSplited[pathSplited.length-1], icon );
         for (SheetDiff shd :
                 diffs) {
 
-            Node shIcon = new ImageView(new Image("row_mod.png"));
+            Node shIcon = new ImageView(new Image("/resources/icons/row_mod.png"));
             System.out.println(shd.getSheet().getSheetName());
             TreeItem<Object> shTree = new TreeItem<Object>(shd.getSheet().getSheetName(), shIcon);
             for (Object  diff:
                     shd.getDifferences()) {
                 if(diff instanceof RowDiff){
-                    Node rowIcon = new ImageView(new Image("row_add.png"));
+                    Node rowIcon = new ImageView(new Image("/resources/icons/row_add.png"));
                     RowDiff row = (RowDiff) diff;
                     TreeItem<Object> rowTree = new TreeItem<Object>(row, rowIcon);
                     shTree.getChildren().add(rowTree);
 
                 } else if(diff instanceof OpenLFunction){
-                    Node rowIcon = new ImageView(new Image("row_add.png"));
+                    Node rowIcon = null;
                     OpenLFunction fun = (OpenLFunction) diff;
+                    if(fun.getOperation().equals(fun.getOperation().CHANGED)){
+                    	rowIcon = new ImageView(new Image("/resources/icons/rule_mod.png"));
+                    } else if (fun.getOperation().equals(fun.getOperation().INSERT)){
+                    	rowIcon = new ImageView(new Image("/resources/icons/rule_add.png"));                    	
+                    }else if (fun.getOperation().equals(fun.getOperation().DELETE)){
+                    	rowIcon = new ImageView(new Image("/resources/icons/rule_del.png"));                    	
+                    }
                     if(fun.getDiferences().size()>0) {
                         TreeItem<Object> funTree = new TreeItem<Object>(fun, rowIcon);
 

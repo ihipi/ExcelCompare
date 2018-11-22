@@ -6,6 +6,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellRange;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.util.CellRangeAddress;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -60,7 +61,25 @@ public class OpenLFunction implements CellRange {
     }
 
 
-    @Override
+	public OpenLFunction(Sheet sh, CellRangeAddress cr) {
+		this.firstRow = cr.getFirstRow();
+		this.lastRow = cr.getLastRow();
+		this.firstCol = cr.getFirstColumn();
+		this.lastCol = cr.getLastColumn();
+		this.name = sh.getRow(cr.getFirstRow()).getCell(cr.getFirstColumn()).getStringCellValue();
+		this.sheet = sh;
+		this.type = type;
+	}
+	public OpenLFunction(Sheet sh, CellRangeAddress cr, String type) {
+		this.firstRow = cr.getFirstRow();
+		this.lastRow = cr.getLastRow();
+		this.firstCol = cr.getFirstColumn();
+		this.lastCol = cr.getLastColumn();
+		this.name = sh.getRow(cr.getFirstRow()).getCell(cr.getFirstColumn()).getStringCellValue();
+		this.sheet = sh;
+	}
+
+	@Override
     public int getWidth() {
         return this.lastCol -this.firstCol;
     }
