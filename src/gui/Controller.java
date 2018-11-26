@@ -102,7 +102,7 @@ public class Controller {
                     }else if (fun.getOperation().equals(fun.getOperation().DELETE)){
                     	rowIcon = new ImageView(new Image("/resources/icons/rule_del.png"));                    	
                     }
-                    if(fun.getDiferences().size()>0) {
+                    
                         TreeItem<Object> funTree = new TreeItem<Object>(fun, rowIcon);
 
                         for (RowDiff row :
@@ -111,7 +111,7 @@ public class Controller {
                             funTree.getChildren().add(rowTree);
                         }
                         shTree.getChildren().add(funTree);
-                    }
+                    
                 }
             }
 

@@ -86,11 +86,18 @@ public class ExcelCompare {
         List<SheetDiff> sheetsA = getworkbookSheets(wba);
         List<SheetDiff> sheetsB = getworkbookSheets(wbb);
         List<SheetDiff> diffs= new ArrayList<SheetDiff>();
-
+        System.out.println("*****************************");
+        System.out.println("*		COMPARE BOOKS		*");
+        System.out.println("*****************************");
         if(!isopenl){
             for (SheetDiff sh : sheetsA) {
+            	
                 SheetDiff shdiff = new SheetDiff();
                 if (sheetsB.contains(sh)) {
+                    System.out.println("*****************************");
+                    System.out.println(sh.getSheet().getSheetName() + "<->" + sheetsB.get(sheetsB.indexOf(sh)).getSheet().getSheetName());
+                    System.out.println("*****************************");
+
                     shdiff.setSheet(sh.getSheet());
                     List<RowDiff> rowDiffs = compareSheets(sh, sheetsB.get(sheetsB.indexOf(sh)));
                     if (rowDiffs != null && !rowDiffs.isEmpty()) {
@@ -100,12 +107,18 @@ public class ExcelCompare {
                     }
                     sheetsB.remove(sh);
                 } else {
+                    System.out.println("*****************************");
+                    System.out.println(sh.getSheet().getSheetName() + "<-> X ");
+                    System.out.println("*****************************");
+
                     shdiff.setOperation(Operation.DELETE);
                     diffs.add(shdiff);
                 }
             }
             for (SheetDiff shd :
                     sheetsB) {
+                System.out.println(" X <->" + shd.getSheet().getSheetName());
+
                 shd.setOperation(Operation.INSERT);
                 diffs.add(shd);
             }
@@ -114,6 +127,7 @@ public class ExcelCompare {
             for (SheetDiff sh : sheetsA) {
                 SheetDiff shdiff = new SheetDiff();
                 if (sheetsB.contains(sh)) {
+                    System.out.println(sh.getSheet().getSheetName() + "<->" + sheetsB.get(sheetsB.indexOf(sh)).getSheet().getSheetName());
                     shdiff.setSheet(sh.getSheet());
                     List<OpenLFunction> rowDiffs = compareOpenLSheet(sh, sheetsB.get(sheetsB.indexOf(sh)));
                     if (rowDiffs != null && !rowDiffs.isEmpty()) {
@@ -123,12 +137,16 @@ public class ExcelCompare {
                     }
                     sheetsB.remove(sh);
                 } else {
+                    System.out.println(sh.getSheet().getSheetName() + "<-> X ");
+
                     shdiff.setOperation(Operation.DELETE);
                     diffs.add(shdiff);
                 }
             }
             for (SheetDiff shd :
                     sheetsB) {
+                System.out.println(" X <->" + shd.getSheet().getSheetName());
+
                 shd.setOperation(Operation.INSERT);
                 diffs.add(shd);
             }
@@ -194,7 +212,7 @@ public class ExcelCompare {
      * @return  List of rows with some changes
      */
     public List<RowDiff> compareSheets(Sheet sha, Sheet shb, int ini, int end, int delta) {
-        System.out.println("\tsheet: " + sha.getSheetName() + " ini:" + ini + "end: " +end);
+        //System.out.println("\tsheet: " + sha.getSheetName() + " ini:" + ini + "end: " +end);
         List<RowDiff> rows = new ArrayList<RowDiff>();
         //compare first row of rank
         RowDiff row = compareRow(sha, shb, ini, ini+delta);
@@ -229,7 +247,7 @@ public class ExcelCompare {
         //discard firsts equal rows
         while(ini<end && (row ==null ||row.getOperation().compareTo(Operation.EQUAL) == 0)){
             ini++;
-            System.out.println("\tsheet: " + sha.getSheetName() + " ini:" + ini + "end: " +end);
+            //System.out.println("\tsheet: " + sha.getSheetName() + " ini:" + ini + "end: " +end);
             row = compareRow(sha, shb, ini, ini+delta);
 
         }
@@ -237,7 +255,7 @@ public class ExcelCompare {
 
         while(end>ini &&  (row ==null || row.getOperation().compareTo(Operation.EQUAL) == 0)){
             end--;
-            System.out.println("\tsheet: " + sha.getSheetName() + " ini:" + ini + "end: " +end);
+            //System.out.println("\tsheet: " + sha.getSheetName() + " ini:" + ini + "end: " +end);
             row = compareRow(sha, shb, ini, ini+delta);
 
         }
@@ -315,11 +333,11 @@ public class ExcelCompare {
                     row.setOperation(Operation.DELETE);
                     row.setRowNew(sha.getRow(rowA));
                 }
-                System.out.println("\t\tRow: " + row.getRowindex() + "(" + row.getOperation() + ")");
+                //System.out.println("\t\tRow: " + row.getRowindex() + "(" + row.getOperation() + ")");
                 return row;
             }
             row.setOperation(Operation.EQUAL);
-            System.out.println("\t\tRow: " + row.getRowindex() + "(" + row.getOperation() + ")");
+            //System.out.println("\t\tRow: " + row.getRowindex() + "(" + row.getOperation() + ")");
             return null;
         }
 
@@ -354,12 +372,14 @@ public class ExcelCompare {
             }
         }
 
-        System.out.println("\t\tRow: " + row.getRowindex() + "(" + row.getOperation() + ")");
+       
         if(hasChanged && isequal){
             row.setOperation(Operation.CHANGED);
+            System.out.println("\t\tRow: " + row.getRowindex() + "(" + row.getOperation() + ")");            
             return row;
         } else if (hasChanged) {
             row.setOperation(Operation.FULL_CHANGE);
+            System.out.println("\t\tRow: " + row.getRowindex() + "(" + row.getOperation() + ")");
             return row;
         }
         return null;
@@ -454,7 +474,7 @@ public class ExcelCompare {
                 value = "";
             }
         }
-        System.out.println(value);
+        //System.out.println(value);
         return value;
     }
     
@@ -474,7 +494,7 @@ public class ExcelCompare {
      * @return the sheet functions
      */
     public List<OpenLFunction> getSheetFunctions(Sheet sh) {
-        System.out.println(sh.getSheetName());
+        //System.out.println("Sheet -> " + sh.getSheetName());
         List<OpenLFunction> functions = new ArrayList<OpenLFunction>();
         //TODO buescar funcions amb un altre metode 
         
@@ -541,6 +561,7 @@ public class ExcelCompare {
                 : funcsA) {
         	//
             if(funcsB.contains(func)){
+            	//System.out.println("Comparando: " + sha.getSheet().getSheetName() + "->" + func.getName() + "<-" + shb.getSheet().getSheetName());
                 OpenLFunction funcDiff = compareOpenLFunctions(func, funcsB.get(funcsB.indexOf(func)));
                 if(funcDiff!=null) {
                     if (funcDiff.getOperation() != Operation.EQUAL) {
@@ -550,6 +571,7 @@ public class ExcelCompare {
                 funcsB.remove(func);
 
             } else {
+            	System.out.println("\"" + func.getName() +"\" eliminada en " + shb.getSheet().getSheetName());
                 func.setOperation(Operation.DELETE);
                 differences.add(func);
             }
@@ -557,7 +579,8 @@ public class ExcelCompare {
         if(!funcsB.isEmpty()){
             for (OpenLFunction func:
                  funcsB) {
-                func.setOperation(Operation.INSERT);
+            	System.out.println("\"" + func.getName() + "\" añadida en " + shb.getSheet().getSheetName());
+            	func.setOperation(Operation.INSERT);
                 differences.add(func);
             }
         }
@@ -580,6 +603,7 @@ public class ExcelCompare {
         if(rowDiffs.isEmpty()){
             return null;
         }
+        System.out.println("Cambios detectados en: \""	+ funb.getSheet().getSheetName() + "->" +  funb.getName() + "\"");
         funb.setOperation(Operation.CHANGED);
         return funb;
     }
@@ -643,7 +667,7 @@ public class ExcelCompare {
 //				c = header.getSheet().getRow(end).getCell(header.getColumnIndex());
 //			}
 			
-			System.out.println(header);
+			//System.out.println(header);
 			for (int i = header.getSheet().getRow(end).getFirstCellNum(); i < header.getRow().getLastCellNum(); i++) {
 				Cell cell = header.getSheet().getRow(end).getCell(i);
 				if(cell != null && cell.getCellType() == cell.CELL_TYPE_STRING 
